@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Ideas - Idea Dump</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .dashboard-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #ideaForm {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #ideaForm input[type="text"],
+        #ideaForm textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        #ideaForm button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #ideaList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #ideaList li {
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .logout-button {
+            display: block;
+            width: 100px;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h2>Your Ideas</h2>
+
+        <form id="ideaForm">
+            <h3>Add a New Idea</h3>
+            <input type="text" id="ideaTitle" placeholder="Idea Title" required>
+            <textarea id="ideaDescription" placeholder="Description"></textarea>
+            <button type="submit">Save Idea</button>
+            <div id="addIdeaMessage" class="success-message" style="display: none;"></div>
+        </form>
+
+        <h3>Your Saved Ideas</h3>
+        <ul id="ideaList">
+            </ul>
+
+        <a href="/logout" class="logout-button">Logout</a>
+    </div>
+    <script>
+        async function fetchIdeas() {
+            const response = await fetch('/api/ideas');
+            const data = await response.json();
+            const ideaList = document.getElementById('ideaList');
+            ideaList.innerHTML = ''; // Clear existing list
+            data.forEach(idea => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<strong>${idea.title}</strong><p>${idea.description || ''}</p>`;
+                ideaList.appendChild(listItem);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchIdeas();
+
+            const ideaForm = document.getElementById('ideaForm');
+            ideaForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('ideaTitle').value;
+                const description = document.getElementById('ideaDescription').value;
+                const addIdeaMessage = document.getElementById('addIdeaMessage');
+
+                const response = await fetch('/api/ideas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, description }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    addIdeaMessage.textContent = 'Idea saved successfully!';
+                    addIdeaMessage.style.display = 'block';
+                    ideaForm.reset();
+                    fetchIdeas(); // Reload the list of ideas
+                    setTimeout(() => addIdeaMessage.style.display = 'none', 3000);
+                } else {
+                    addIdeaMessage.textContent = data.message || 'Failed to save idea.';
+                    addIdeaMessage.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
