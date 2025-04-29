@@ -3,140 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Ideas - Idea Dump</title>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Roboto:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
-    <style>
-        .dashboard-container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        #ideaForm {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        #ideaForm input[type="text"],
-        #ideaForm textarea {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        #ideaForm button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        #ideaList {
-            list-style: none;
-            padding: 0;
-        }
-
-        #ideaList li {
-            border: 1px solid #eee;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-
-        .logout-button {
-            display: block;
-            width: 100px;
-            margin-top: 20px;
-            padding: 10px 15px;
-            background-color: #dc3545;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-        }
-    </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <h2>Your Ideas</h2>
+    <div class="container">
+        <h1>Welcome to your Dashboard, <span id="username"></span>!</h1>
+        <button id="logoutButton">Logout</button>
 
-        <form id="ideaForm">
-            <h3>Add a New Idea</h3>
-            <input type="text" id="ideaTitle" placeholder="Idea Title" required>
-            <textarea id="ideaDescription" placeholder="Description"></textarea>
+        <h2>Save a New Idea</h2>
+        <form id="newIdeaForm">
+            <input type="text" id="title" placeholder="Idea Title" required>
+            <textarea id="description" placeholder="Idea Description"></textarea>
             <button type="submit">Save Idea</button>
-            <div id="addIdeaMessage" class="success-message" style="display: none;"></div>
         </form>
 
-        <h3>Your Saved Ideas</h3>
+        <h2>Your Saved Ideas</h2>
         <ul id="ideaList">
             </ul>
-
-        <a href="/logout" class="logout-button">Logout</a>
     </div>
-    <script>
-        async function fetchIdeas() {
-            const response = await fetch('/api/ideas');
-            const data = await response.json();
-            const ideaList = document.getElementById('ideaList');
-            ideaList.innerHTML = ''; // Clear existing list
-            data.forEach(idea => {
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `<strong>${idea.title}</strong><p>${idea.description || ''}</p>`;
-                ideaList.appendChild(listItem);
-            });
-        }
 
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const usernameSpan = document.getElementById('username');
+            const logoutButton = document.getElementById('logoutButton');
+            const newIdeaForm = document.getElementById('newIdeaForm');
+            const titleInput = document.getElementById('title');
+            const descriptionInput = document.getElementById('description');
+            const ideaList = document.getElementById('ideaList');
+
+            // Initialize SimpleMDE for Markdown editing
+            const simplemde = new SimpleMDE({ element: descriptionInput });
+
+            // Fetch username on load
+            fetch('/api/user') // Assuming you have an endpoint to get user info
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username) {
+                        usernameSpan.textContent = data.username;
+                    }
+                })
+                .catch(error => console.error('Error fetching user:', error));
+
+            // Fetch existing ideas on load
             fetchIdeas();
 
-            const ideaForm = document.getElementById('ideaForm');
-            ideaForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const title = document.getElementById('ideaTitle').value;
-                const description = document.getElementById('ideaDescription').value;
-                const addIdeaMessage = document.getElementById('addIdeaMessage');
+            logoutButton.addEventListener('click', () => {
+                fetch('/logout')
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = '/';
+                        } else {
+                            alert('Failed to logout.');
+                        }
+                    })
+                    .catch(error => console.error('Logout error:', error));
+            });
 
-                const response = await fetch('/api/ideas', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ title, description }),
-                });
+            newIdeaForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const title = titleInput.value.trim();
+                const description = simplemde.value(); // Get Markdown content from SimpleMDE
 
-                const data = await response.json();
-                if (response.ok) {
-                    addIdeaMessage.textContent = 'Idea saved successfully!';
-                    addIdeaMessage.style.display = 'block';
-                    ideaForm.reset();
-                    fetchIdeas(); // Reload the list of ideas
-                    setTimeout(() => addIdeaMessage.style.display = 'none', 3000);
-                } else {
-                    addIdeaMessage.textContent = data.message || 'Failed to save idea.';
-                    addIdeaMessage.style.display = 'block';
+                if (title) {
+                    const response = await fetch('/api/ideas', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ title, description }),
+                    });
+
+                    if (response.ok) {
+                        titleInput.value = '';
+                        simplemde.value(''); // Clear SimpleMDE editor
+                        fetchIdeas(); // Reload the list
+                    } else {
+                        const data = await response.json();
+                        alert(data.message || 'Failed to save idea.');
+                    }
                 }
             });
+
+            async function fetchIdeas() {
+                const response = await fetch('/api/ideas');
+                const data = await response.json();
+                ideaList.innerHTML = '';
+                data.forEach(idea => {
+                    const renderedDescription = marked.parse(idea.description || '');
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <strong>${idea.title}</strong>
+                        <div class="markdown-body">${renderedDescription}</div>
+                        <button class="delete-button" data-id="${idea._id}">Delete</button>
+                    `;
+                    ideaList.appendChild(listItem);
+                });
+
+                // Add event listeners to the new delete buttons
+                const deleteButtons = document.querySelectorAll('.delete-button');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', async (event) => {
+                        const ideaId = event.target.dataset.id;
+                        if (confirm('Are you sure you want to delete this idea?')) {
+                            const response = await fetch(`/api/ideas/${ideaId}`, {
+                                method: 'DELETE',
+                            });
+                            if (response.ok) {
+                                fetchIdeas(); // Reload the list after deletion
+                            } else {
+                                const data = await response.json();
+                                alert(data.message || 'Failed to delete idea.');
+                            }
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>

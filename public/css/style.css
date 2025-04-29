@@ -1,44 +1,187 @@
+/* public/css/style.css */
+
 body {
-    font-family: sans-serif;
-    margin: 0;
+    font-family: 'Roboto', sans-serif; /* Default to Roboto for general text */
+    margin: 20px;
     background-color: #f4f4f4;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
+    max-width: 800px;
+    margin: 30px auto; /* Increased top/bottom margin for better spacing */
     background-color: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 40px; /* Increased padding for more comfortable spacing */
+    border-radius: 12px; /* More pronounced rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
+}
+
+h1, h2 {
+    font-family: 'Outfit', sans-serif; /* Apply Outfit Semi Bold to headings */
+    color: #2c3e50; /* Darker, more modern heading color */
+    margin-bottom: 25px; /* Increased bottom margin for separation */
     text-align: center;
+    letter-spacing: 0.8px; /* Slight letter spacing for better readability */
 }
 
-h1 {
-    color: #333;
-    margin-bottom: 20px;
+#username {
+    font-weight: 600; /* Semi Bold */
+    color: #3498db; /* A more vibrant blue */
+    font-family: 'Roboto', sans-serif;
 }
 
-p {
-    color: #666;
+#logoutButton {
+    font-family: 'Roboto', sans-serif;
+    background-color: #e74c3c; /* More vibrant red */
+    color: white;
+    border: none;
+    padding: 12px 20px; /* Increased padding */
+    border-radius: 8px; /* More rounded corners */
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 25px;
+    display: block;
+    width: fit-content;
+    margin-left: auto;
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+}
+
+#logoutButton:hover {
+    background-color: #c0392b; /* Darker red on hover */
+}
+
+#newIdeaForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Increased gap */
     margin-bottom: 30px;
 }
 
-.auth-buttons a {
-    display: inline-block;
-    padding: 10px 20px;
-    text-decoration: none;
-    color: #fff;
-    border-radius: 5px;
-    margin: 0 10px;
+#newIdeaForm label {
+    font-weight: 500;
+    color: #555;
 }
 
-.button {
-    background-color: #555;
+#newIdeaForm input[type="text"],
+#newIdeaForm textarea {
+    font-family: 'Roboto', sans-serif;
+    padding: 12px;
+    border: 1px solid #bdc3c7; /* Lighter border */
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease; /* Smooth border transition */
 }
 
-.button.primary {
-    background-color: #007bff;
+#newIdeaForm input[type="text"]:focus,
+#newIdeaForm textarea:focus {
+    outline: none;
+    border-color: #3498db; /* Highlight on focus */
+}
+
+#newIdeaForm textarea {
+    resize: vertical;
+    min-height: 120px; /* Slightly taller textarea */
+}
+
+.CodeMirror { /* Style for SimpleMDE editor */
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-family: 'Roboto', monospace;
+    transition: border-color 0.3s ease;
+}
+
+.CodeMirror:focus-within {
+    border-color: #3498db;
+}
+
+.CodeMirror-scroll {
+    min-height: 120px;
+}
+
+#newIdeaForm button[type="submit"] {
+    font-family: 'Roboto', sans-serif;
+    background-color: #3498db; /* More vibrant blue */
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+}
+
+#newIdeaForm button[type="submit"]:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+}
+
+#ideaList {
+    list-style: none;
+    padding: 0;
+}
+
+#ideaList li {
+    font-family: 'Roboto', sans-serif;
+    background-color: #fff; /* White background for list items */
+    padding: 20px; /* More padding */
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd; /* Light gray border */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle shadow for list items */
+}
+
+#ideaList li strong {
+    font-size: 20px; /* Slightly larger title */
+    color: #2c3e50;
+    font-family: 'Outfit', sans-serif;
+    margin-bottom: 5px;
+}
+
+#ideaList li .markdown-body {
+    color: #555;
+    margin-bottom: 15px;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6; /* Improved line height for readability */
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin-left: 25px;
+    padding-left: 0;
+}
+
+.markdown-body ul li,
+.markdown-body ol li {
+    margin-bottom: 5px;
+}
+
+.markdown-body strong {
+    font-weight: 600;
+}
+
+.markdown-body em {
+    font-style: italic;
+}
+
+#ideaList li .delete-button {
+    font-family: 'Roboto', sans-serif;
+    background-color: #e74c3c; /* More vibrant red */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    width: fit-content;
+    align-self: flex-end;
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+}
+
+#ideaList li .delete-button:hover {
+    background-color: #c0392b; /* Darker red on hover */
 }

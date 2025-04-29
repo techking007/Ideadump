@@ -55,6 +55,20 @@ app.post('/register', async (req, res) => {
     }
 });
 
+app.delete('/api/ideas/:id', isAuthenticated, async (req, res) => {
+    const ideaId = req.params.id;
+    try {
+        const idea = await Idea.findOneAndDelete({ _id: ideaId, userId: req.session.userId });
+        if (!idea) {
+            return res.status(404).json({ message: 'Idea not found or you are not authorized to delete it.' });
+        }
+        res.status(200).json({ message: 'Idea deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting idea:', error);
+        res.status(500).json({ message: 'Failed to delete idea.' });
+    }
+});
+
 app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
