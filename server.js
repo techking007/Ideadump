@@ -23,7 +23,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://srujal:srujal%40m0ng0
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback"
+    callbackURL: "https://ideadump-five.vercel.app/auth/google/callback"
 },
 async (accessToken, refreshToken, profile, done) => {
     try {
