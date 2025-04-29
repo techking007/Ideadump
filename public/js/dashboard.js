@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 editingIdeaId = ideaId;
                 editTitleInput.value = title;
                 simplemdeEdit.value(description);
-                editModal.style.display = 'block'; // Show the modal
+                editModal.classList.add('active'); // Show the modal using class
             });
         });
     }
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 fetchIdeas(); // Reload the list
-                editModal.style.display = 'none'; // Hide the modal
+                editModal.classList.remove('active'); // Hide the modal using class
                 editingIdeaId = null; // Reset editing ID
             } else {
                 const data = await response.json();
@@ -153,18 +153,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listeners to close the modal
     cancelEditModalButton.addEventListener('click', () => {
-        editModal.style.display = 'none';
+        editModal.classList.remove('active');
         editingIdeaId = null;
     });
 
     closeModalSpan.addEventListener('click', () => {
-        editModal.style.display = 'none';
+        editModal.classList.remove('active');
         editingIdeaId = null;
     });
 
     window.addEventListener('click', (event) => {
         if (event.target === editModal) {
-            editModal.style.display = 'none';
+            editModal.classList.remove('active');
             editingIdeaId = null;
         }
     });

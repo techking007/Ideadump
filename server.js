@@ -4,6 +4,9 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const marked = require('marked');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,11 +19,64 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://srujal:srujal%40m0ng0
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.error('MongoDB connection error:', err));
 
+// Passport Configuration
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "/auth/google/callback"
+},
+async (accessToken, refreshToken, profile, done) => {
+    try {
+        let user = await User.findOne({ googleId: profile.id });
+
+        if (!user) {
+            // Check if a user with the same email exists
+            user = await User.findOne({ email: profile.emails[0].value });
+            if (user) {
+                // Link Google account to existing user
+                user.googleId = profile.id;
+                await user.save();
+            } else {
+                // Create a new user
+                user = new User({
+                    googleId: profile.id,
+                    username: profile.displayName,
+                    email: profile.emails[0].value
+                });
+                await user.save();
+            }
+        }
+
+        return done(null, user);
+    } catch (error) {
+        return done(error, null);
+    }
+}));
+
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (error) {
+        done(error, null);
+    }
+});
+
 // MongoDB Schema and Model (Assuming you have a User and Idea model)
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: {
+        type: String,
+        required: function() {
+            return !this.googleId;
+        }
+    },
+    googleId: { type: String },
     // Add any other user fields
 });
 const User = mongoose.model('User', UserSchema);
@@ -38,18 +94,20 @@ const Idea = mongoose.model('Idea', IdeaSchema);
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(session({
-    secret: 'ideadump', // Replace with a strong, unique secret
+    secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === 'production' } // Set secure only in production
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
-    if (req.session.userId) {
+    if (req.isAuthenticated()) {
         return next();
     }
     res.redirect('/login');
@@ -70,26 +128,35 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// Google OAuth Routes
+app.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+        res.redirect('/dashboard');
+    }
+);
+
 app.get('/dashboard', isAuthenticated, async (req, res) => {
     try {
-        const ideas = await Idea.find({ userId: req.session.userId }).sort({ createdAt: 'desc' });
+        const ideas = await Idea.find({ userId: req.user._id }).sort({ createdAt: 'desc' });
         res.render('dashboard', {
-            user: { username: req.session.username },
+            user: req.user,
             ideas: ideas,
-            marked: marked // Pass the marked function to the template
+            marked: marked
         });
     } catch (error) {
         console.error('Error fetching ideas:', error);
         res.status(500).send('Error fetching your ideas.');
     }
 });
+
 app.get('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            console.error('Error destroying session:', err);
-            return res.status(500).send('Error logging out.');
-        }
-        res.redirect('/login');
+    req.logout(() => {
+        res.redirect('/');
     });
 });
 
@@ -123,9 +190,13 @@ app.post('/login', async (req, res) => {
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ message: 'Invalid credentials.' });
         }
-        req.session.userId = user._id;
-        req.session.username = user.username; // Storing username in session
-        res.status(200).json({ message: 'Logged in successfully.' });
+        req.login(user, (err) => {
+            if (err) {
+                console.error('Login error:', err);
+                return res.status(500).json({ message: 'Failed to login.' });
+            }
+            return res.status(200).json({ message: 'Logged in successfully.' });
+        });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Failed to login.' });
@@ -134,13 +205,13 @@ app.post('/login', async (req, res) => {
 
 // GET route to fetch user info (for displaying username on dashboard)
 app.get('/api/user', isAuthenticated, (req, res) => {
-    res.json({ username: req.session.username, userId: req.session.userId });
+    res.json({ username: req.user.username, userId: req.user._id });
 });
 
 // GET route to fetch all ideas for the logged-in user
 app.get('/api/ideas', isAuthenticated, async (req, res) => {
     try {
-        const ideas = await Idea.find({ userId: req.session.userId }).sort({ createdAt: 'desc' });
+        const ideas = await Idea.find({ userId: req.user._id }).sort({ createdAt: 'desc' });
         res.json(ideas);
     } catch (error) {
         console.error('Error fetching ideas:', error);
@@ -152,7 +223,7 @@ app.get('/api/ideas', isAuthenticated, async (req, res) => {
 app.post('/api/ideas', isAuthenticated, async (req, res) => {
     try {
         const { title, description } = req.body;
-        const newIdea = new Idea({ userId: req.session.userId, title, description });
+        const newIdea = new Idea({ userId: req.user._id, title, description });
         await newIdea.save();
         res.status(201).json({ message: 'Idea saved successfully!', idea: newIdea });
     } catch (error) {
@@ -165,7 +236,7 @@ app.post('/api/ideas', isAuthenticated, async (req, res) => {
 app.delete('/api/ideas/:id', isAuthenticated, async (req, res) => {
     const ideaId = req.params.id;
     try {
-        const idea = await Idea.findOneAndDelete({ _id: ideaId, userId: req.session.userId });
+        const idea = await Idea.findOneAndDelete({ _id: ideaId, userId: req.user._id });
         if (!idea) {
             return res.status(404).json({ message: 'Idea not found or you are not authorized to delete it.' });
         }
@@ -182,7 +253,7 @@ app.put('/api/ideas/:id', isAuthenticated, async (req, res) => {
     const { title, description } = req.body;
     try {
         const updatedIdea = await Idea.findOneAndUpdate(
-            { _id: ideaId, userId: req.session.userId },
+            { _id: ideaId, userId: req.user._id },
             { title, description, updatedAt: Date.now() },
             { new: true } // Return the updated document
         );

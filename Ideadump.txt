@@ -1,0 +1,1184 @@
+// Source: https://github.com/techking007/Ideadump (branch: main)
+// Merged on: 2025-04-29T18:34:56.379Z
+
+/*
+Ideadump/
+   │  ├─ idea.js
+   │  └─ user.js
+   ├─ public
+   │  ├─ css
+   │  │  └─ style.css
+   │  ├─ js
+   │  │  ├─ auth.js
+   │  │  ├─ dashboard.js
+   │  │  └─ main.js
+   │  ├─ index.html
+   │  ├─ login.html
+   │  └─ signup.html
+   ├─ routes
+   │  ├─ auth.js
+   │  └─ idea.js
+   ├─ views
+   │  ├─ dashboard.ejs
+   │  └─ dashboard.html
+   ├─ package-lock.json
+   ├─ package.json
+   ├─ server.js
+   └─ vercel.json
+*/
+
+
+// File: Ideadump/models\idea.js
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const IdeaSchema = new Schema({
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    title: { type: String, required: true },
+    description: String,
+    createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Idea', IdeaSchema);
+
+// File: Ideadump/models\user.js
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const UserSchema = new Schema({
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true }
+});
+
+module.exports = mongoose.model('User', UserSchema);
+
+// File: Ideadump/package.json
+{
+  "name": "ideadump",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "marked": "^15.0.11",
+    "mongodb": "^6.16.0",
+    "mongoose": "^8.14.0",
+    "path": "^0.12.7"
+  }
+}
+
+
+// File: Ideadump/public\css\style.css
+/* public/css/style.css */
+
+body {
+    font-family: 'Roboto', sans-serif; /* Default to Roboto for general text */
+    margin: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 960px; /* Slightly wider container for grid layout */
+    margin: 30px auto;
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+h1, h2 {
+    font-family: 'Outfit', sans-serif; /* Apply Outfit Semi Bold to headings */
+    color: #2c3e50;
+    margin-bottom: 25px;
+    text-align: center;
+    letter-spacing: 0.8px;
+}
+
+#username {
+    font-weight: 600; /* Semi Bold */
+    color: #3498db; /* A more vibrant blue */
+    font-family: 'Roboto', sans-serif;
+}
+
+#logoutButton {
+    font-family: 'Roboto', sans-serif;
+    background-color: #e74c3c; /* More vibrant red */
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 25px;
+    display: block;
+    width: fit-content;
+    margin-left: auto;
+    transition: background-color 0.3s ease;
+}
+
+#logoutButton:hover {
+    background-color: #c0392b; /* Darker red on hover */
+}
+
+#newIdeaForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+#newIdeaForm label {
+    font-weight: 500;
+    color: #555;
+}
+
+#newIdeaForm input[type="text"],
+#newIdeaForm textarea {
+    font-family: 'Roboto', sans-serif;
+    padding: 12px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+#newIdeaForm input[type="text"]:focus,
+#newIdeaForm textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+#newIdeaForm textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.CodeMirror { /* Style for SimpleMDE editor */
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-family: 'Roboto', monospace;
+    transition: border-color 0.3s ease;
+}
+
+.CodeMirror:focus-within {
+    border-color: #3498db;
+}
+
+.CodeMirror-scroll {
+    min-height: 120px;
+}
+
+.CodeMirror-toolbar {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    gap: 5px; /* Add some spacing between buttons */
+    padding: 5px;
+    background-color: #f8f8f8; /* Light background for the toolbar */
+    border-bottom: 1px solid #eee;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.CodeMirror-toolbar button {
+    background: none;
+    border: 1px solid #ccc;
+    color: #555;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: border-color 0.3s ease, color 0.3s ease;
+    margin: 0; /* Reset default button margins */
+}
+
+.CodeMirror-toolbar button:hover,
+.CodeMirror-toolbar button.active {
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.CodeMirror-toolbar button.separator {
+    border-left: 1px solid #eee;
+    border-right: none;
+    padding: 0 5px;
+    margin: 0 5px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.CodeMirror-toolbar button.separator::before {
+    content: "";
+}
+
+#newIdeaForm button[type="submit"] {
+    font-family: 'Roboto', sans-serif;
+    background-color: #3498db; /* More vibrant blue */
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#newIdeaForm button[type="submit"]:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+}
+
+#ideaList {
+    list-style: none;
+    padding: 0;
+    display: grid; /* Use grid for a card-like layout */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive columns */
+    gap: 20px; /* Spacing between cards */
+}
+
+#ideaList li {
+    font-family: 'Roboto', sans-serif;
+    background-color: #fff; /* White card background */
+    padding: 20px;
+    border-radius: 12px; /* More rounded corners for card look */
+    margin-bottom: 0; /* Remove default bottom margin as grid handles spacing */
+    border: 1px solid #ddd; /* Light gray border for definition */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Space out content within the card */
+}
+
+#ideaList li strong {
+    font-size: 1.2em; /* Slightly larger title */
+    color: #2c3e50;
+    font-family: 'Outfit', sans-serif;
+    margin-bottom: 10px;
+}
+
+#ideaList li .markdown-body {
+    color: #555;
+    margin-bottom: 15px;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    flex-grow: 1; /* Allow description to take up available space */
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+.markdown-body ul li,
+.markdown-body ol li {
+    margin-bottom: 5px;
+}
+
+.markdown-body strong {
+    font-weight: 600;
+}
+
+.markdown-body em {
+    font-style: italic;
+}
+
+#ideaList li .actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 15px; /* More space above buttons */
+}
+
+#ideaList li .edit-button,
+#ideaList li .delete-button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em; /* Slightly smaller button text */
+    width: fit-content;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+#ideaList li .edit-button {
+    background-color: transparent;
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+#ideaList li .edit-button:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+#ideaList li .delete-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+}
+
+#ideaList li .delete-button:hover {
+    background-color: #c0392b;
+}
+
+// File: Ideadump/public\index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idea Dump</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Roboto:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Idea Dump</h1>
+        <p>A place to store and revisit your random bursts of inspiration.</p>
+        <div class="auth-buttons">
+            <a href="/login" class="button">Sign In</a>
+            <a href="/signup" class="button primary">Sign Up</a>
+        </div>
+    </div>
+    <script src="/js/main.js"></script>
+</body>
+</html>
+
+// File: Ideadump/public\js\auth.js
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                window.location.href = '/dashboard'; // Redirect to dashboard on success
+            } else {
+                loginError.textContent = data.message || 'Login failed.';
+                loginError.style.display = 'block';
+            }
+        });
+    }
+
+    const signupForm = document.getElementById('signupForm');
+    if (signupForm) {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const signupError = document.getElementById('signupError');
+
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, email, password }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                window.location.href = '/login'; // Redirect to login on success
+            } else {
+                signupError.textContent = data.message || 'Signup failed.';
+                signupError.style.display = 'block';
+            }
+        });
+    }
+});
+
+// File: Ideadump/public\js\dashboard.js
+document.addEventListener('DOMContentLoaded', () => {
+    const usernameSpan = document.getElementById('username');
+    const logoutButton = document.getElementById('logoutButton');
+    const newIdeaForm = document.getElementById('newIdeaForm');
+    const titleInput = document.getElementById('title');
+    const descriptionInput = document.getElementById('description');
+    const ideaList = document.getElementById('ideaList');
+    const saveIdeaButton = newIdeaForm.querySelector('button[type="submit"]');
+
+    // Modal elements
+    const editModal = document.getElementById('editModal');
+    const editIdeaForm = document.getElementById('editIdeaForm');
+    const editTitleInput = document.getElementById('editTitle');
+    const editDescriptionInput = document.getElementById('editDescription');
+    const updateIdeaButton = document.getElementById('updateIdeaButton');
+    const cancelEditModalButton = document.getElementById('cancelEditModalButton');
+    const closeModalSpan = editModal.querySelector('.close-button');
+
+    // Initialize SimpleMDE editors
+    const simplemdeNew = new SimpleMDE({ element: descriptionInput });
+    const simplemdeEdit = new SimpleMDE({ element: editDescriptionInput });
+
+    let editingIdeaId = null;
+
+    // Fetch username on load
+    fetch('/api/user')
+        .then(response => response.json())
+        .then(data => {
+            if (data.username) {
+                usernameSpan.textContent = data.username;
+            }
+        })
+        .catch(error => console.error('Error fetching user:', error));
+
+    // Fetch existing ideas on load
+    fetchIdeas();
+
+    logoutButton.addEventListener('click', () => {
+        fetch('/logout')
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/login';
+                } else {
+                    alert('Failed to logout.');
+                }
+            })
+            .catch(error => console.error('Logout error:', error));
+    });
+
+    newIdeaForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const title = titleInput.value.trim();
+        const description = simplemdeNew.value();
+
+        if (title) {
+            const response = await fetch('/api/ideas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, description }),
+            });
+
+            if (response.ok) {
+                titleInput.value = '';
+                simplemdeNew.value('');
+                fetchIdeas(); // Reload the list
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Failed to save idea.');
+            }
+        }
+    });
+
+    async function fetchIdeas() {
+        const response = await fetch('/api/ideas');
+        const data = await response.json();
+        ideaList.innerHTML = '';
+        data.forEach(idea => {
+            const renderedDescription = marked.parse(idea.description || '');
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <strong>${idea.title}</strong>
+                <div class="markdown-body">${renderedDescription}</div>
+                <div class="actions">
+                    <button class="edit-button" data-id="${idea._id}" data-title="${idea.title}" data-description="${idea.description}">Edit</button>
+                    <button class="delete-button" data-id="${idea._id}">Delete</button>
+                </div>
+            `;
+            ideaList.appendChild(listItem);
+        });
+
+        // Add event listeners to the new delete buttons
+        const deleteButtons = document.querySelectorAll('.delete-button');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                const ideaId = event.target.dataset.id;
+                if (confirm('Are you sure you want to delete this idea?')) {
+                    const response = await fetch(`/api/ideas/${ideaId}`, {
+                        method: 'DELETE',
+                    });
+                    if (response.ok) {
+                        fetchIdeas(); // Reload the list after deletion
+                    } else {
+                        const data = await response.json();
+                        alert(data.message || 'Failed to delete idea.');
+                    }
+                }
+            });
+        });
+
+        // Add event listeners to the new edit buttons
+        const editButtons = document.querySelectorAll('.edit-button');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const ideaId = event.target.dataset.id;
+                const title = event.target.dataset.title;
+                const description = event.target.dataset.description;
+
+                editingIdeaId = ideaId;
+                editTitleInput.value = title;
+                simplemdeEdit.value(description);
+                editModal.style.display = 'block'; // Show the modal
+            });
+        });
+    }
+
+    // Event listener for the Update button in the modal
+    editIdeaForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const title = editTitleInput.value.trim();
+        const description = simplemdeEdit.value();
+
+        if (title && editingIdeaId) {
+            const response = await fetch(`/api/ideas/${editingIdeaId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, description }),
+            });
+
+            if (response.ok) {
+                fetchIdeas(); // Reload the list
+                editModal.style.display = 'none'; // Hide the modal
+                editingIdeaId = null; // Reset editing ID
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Failed to update idea.');
+            }
+        }
+    });
+
+    // Event listeners to close the modal
+    cancelEditModalButton.addEventListener('click', () => {
+        editModal.style.display = 'none';
+        editingIdeaId = null;
+    });
+
+    closeModalSpan.addEventListener('click', () => {
+        editModal.style.display = 'none';
+        editingIdeaId = null;
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === editModal) {
+            editModal.style.display = 'none';
+            editingIdeaId = null;
+        }
+    });
+});
+
+// File: Ideadump/public\js\main.js
+// You can add general front-end scripts here if needed
+
+// File: Ideadump/public\login.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Idea Dump</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Roboto:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Sign In</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="button primary">Sign In</button>
+            <p class="mt-2">Don't have an account? <a href="/signup">Sign Up</a></p>
+            <div id="loginError" class="error-message" style="display: none;"></div>
+        </form>
+    </div>
+    <script src="/js/auth.js"></script>
+</body>
+</html>
+
+// File: Ideadump/public\signup.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Idea Dump</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Roboto:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="button primary">Sign Up</button>
+            <p class="mt-2">Already have an account? <a href="/login">Sign In</a></p>
+            <div id="signupError" class="error-message" style="display: none;"></div>
+        </form>
+    </div>
+    <script src="/js/auth.js"></script>
+</body>
+</html>
+
+// File: Ideadump/routes\auth.js
+
+
+// File: Ideadump/routes\idea.js
+
+
+// File: Ideadump/server.js
+const express = require('express');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+const path = require('path');
+const marked = require('marked');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://srujal:srujal%40m0ng0db@srujal.aitn3br.mongodb.net/?retryWrites=true&w=majority&appName=Srujal', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => console.error('MongoDB connection error:', err));
+
+// MongoDB Schema and Model (Assuming you have a User and Idea model)
+const UserSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    // Add any other user fields
+});
+const User = mongoose.model('User', UserSchema);
+
+const IdeaSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    title: { type: String, required: true },
+    description: String,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+const Idea = mongoose.model('Idea', IdeaSchema);
+
+// Middleware
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(session({
+    secret: 'ideadump', // Replace with a strong, unique secret
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === 'production' } // Set secure only in production
+}));
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Middleware to check if user is authenticated
+const isAuthenticated = (req, res, next) => {
+    if (req.session.userId) {
+        return next();
+    }
+    res.redirect('/login');
+};
+
+// Routes
+
+// GET routes for static pages
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/signup', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'signup.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/dashboard', isAuthenticated, async (req, res) => {
+    try {
+        const ideas = await Idea.find({ userId: req.session.userId }).sort({ createdAt: 'desc' });
+        res.render('dashboard', {
+            user: { username: req.session.username },
+            ideas: ideas,
+            marked: marked // Pass the marked function to the template
+        });
+    } catch (error) {
+        console.error('Error fetching ideas:', error);
+        res.status(500).send('Error fetching your ideas.');
+    }
+});
+app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            return res.status(500).send('Error logging out.');
+        }
+        res.redirect('/login');
+    });
+});
+
+// API routes
+
+// POST route for signup
+app.post('/signup', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Username or email already exists.' });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ username, email, password: hashedPassword });
+        await newUser.save();
+        req.session.userId = newUser._id;
+        req.session.username = newUser.username;
+        res.status(201).json({ message: 'User registered successfully.' });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ message: 'Failed to register user.' });
+    }
+});
+
+// POST route for login
+app.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+        req.session.userId = user._id;
+        req.session.username = user.username; // Storing username in session
+        res.status(200).json({ message: 'Logged in successfully.' });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Failed to login.' });
+    }
+});
+
+// GET route to fetch user info (for displaying username on dashboard)
+app.get('/api/user', isAuthenticated, (req, res) => {
+    res.json({ username: req.session.username, userId: req.session.userId });
+});
+
+// GET route to fetch all ideas for the logged-in user
+app.get('/api/ideas', isAuthenticated, async (req, res) => {
+    try {
+        const ideas = await Idea.find({ userId: req.session.userId }).sort({ createdAt: 'desc' });
+        res.json(ideas);
+    } catch (error) {
+        console.error('Error fetching ideas:', error);
+        res.status(500).json({ message: 'Failed to fetch ideas.' });
+    }
+});
+
+// POST route to save a new idea
+app.post('/api/ideas', isAuthenticated, async (req, res) => {
+    try {
+        const { title, description } = req.body;
+        const newIdea = new Idea({ userId: req.session.userId, title, description });
+        await newIdea.save();
+        res.status(201).json({ message: 'Idea saved successfully!', idea: newIdea });
+    } catch (error) {
+        console.error('Error saving idea:', error);
+        res.status(500).json({ message: 'Failed to save idea.' });
+    }
+});
+
+// DELETE route to delete an idea
+app.delete('/api/ideas/:id', isAuthenticated, async (req, res) => {
+    const ideaId = req.params.id;
+    try {
+        const idea = await Idea.findOneAndDelete({ _id: ideaId, userId: req.session.userId });
+        if (!idea) {
+            return res.status(404).json({ message: 'Idea not found or you are not authorized to delete it.' });
+        }
+        res.status(200).json({ message: 'Idea deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting idea:', error);
+        res.status(500).json({ message: 'Failed to delete idea.' });
+    }
+});
+
+// PUT route to update an existing idea
+app.put('/api/ideas/:id', isAuthenticated, async (req, res) => {
+    const ideaId = req.params.id;
+    const { title, description } = req.body;
+    try {
+        const updatedIdea = await Idea.findOneAndUpdate(
+            { _id: ideaId, userId: req.session.userId },
+            { title, description, updatedAt: Date.now() },
+            { new: true } // Return the updated document
+        );
+        if (!updatedIdea) {
+            return res.status(404).json({ message: 'Idea not found or you are not authorized to update it.' });
+        }
+        res.status(200).json({ message: 'Idea updated successfully!', idea: updatedIdea });
+    } catch (error) {
+        console.error('Error updating idea:', error);
+        res.status(500).json({ message: 'Failed to update idea.' });
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+});
+
+// File: Ideadump/vercel.json
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "server.js",
+        "use": "@vercel/node",
+        "config": {
+          "installCommand": "npm install --build-from-source"
+        }
+      },
+      {
+        "src": "public/**",
+        "use": "@vercel/static"
+      }
+    ],
+    "routes": [
+      { "src": "/(.*)", "dest": "server.js" }
+    ]
+  }
+
+// File: Ideadump/views\dashboard.ejs
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to your Dashboard, <%= user.username %>!</h1>
+        <button id="logoutButton">Logout</button>
+
+        <h2>Save a New Idea</h2>
+        <form id="newIdeaForm">
+            <input type="text" id="title" placeholder="Idea Title" required>
+            <textarea id="description" placeholder="Idea Description"></textarea>
+            <button type="submit">Save Idea</button>
+        </form>
+
+        <h2>Your Saved Ideas</h2>
+        <ul id="ideaList">
+            <% if (ideas && ideas.length > 0) { %>
+                <% ideas.forEach(idea => { %>
+                    <li>
+                        <strong><%= idea.title %></strong>
+                        <div class="markdown-body"><%- marked.parse(idea.description || '') %></div>
+                        <div class="actions">
+                            <button class="edit-button" data-id="<%= idea._id %>" data-title="<%= idea.title %>" data-description="<%= idea.description %>">Edit</button>
+                            <button class="delete-button" data-id="<%= idea._id %>">Delete</button>
+                        </div>
+                    </li>
+                <% }); %>
+            <% } else { %>
+                <p>No ideas saved yet!</p>
+            <% } %>
+        </ul>
+    </div>
+
+    <div id="editModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Edit Idea</h2>
+            <form id="editIdeaForm">
+                <input type="hidden" id="editIdeaId">
+                <label for="editTitle">Title:</label>
+                <input type="text" id="editTitle" required>
+                <label for="editDescription">Description:</label>
+                <textarea id="editDescription"></textarea>
+                <div class="form-actions">
+                    <button type="submit" id="updateIdeaButton">Update Idea</button>
+                    <button type="button" id="cancelEditModalButton">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Basic modal styling */
+        .modal {
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #editIdeaForm label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #editIdeaForm input[type="text"],
+        #editIdeaForm textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        #editIdeaForm textarea {
+            min-height: 150px;
+        }
+
+        #editIdeaForm .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        #editIdeaForm button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #updateIdeaButton {
+            background-color: #28a745; /* Green update button */
+            color: white;
+            border: none;
+        }
+
+        #updateIdeaButton:hover {
+            background-color: #218838;
+        }
+
+        #cancelEditModalButton {
+            background-color: #f4f4f4;
+            color: #555;
+            border: 1px solid #ccc;
+        }
+
+        #cancelEditModalButton:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
+
+// File: Ideadump/views\dashboard.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600&family=Roboto:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to your Dashboard, <span id="username"></span>!</h1>
+        <button id="logoutButton">Logout</button>
+
+        <h2>Save a New Idea</h2>
+        <form id="newIdeaForm">
+            <input type="text" id="title" placeholder="Idea Title" required>
+            <textarea id="description" placeholder="Idea Description"></textarea>
+            <button type="submit">Save Idea</button>
+        </form>
+
+        <h2>Your Saved Ideas</h2>
+        <ul id="ideaList">
+            </ul>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const usernameSpan = document.getElementById('username');
+            const logoutButton = document.getElementById('logoutButton');
+            const newIdeaForm = document.getElementById('newIdeaForm');
+            const titleInput = document.getElementById('title');
+            const descriptionInput = document.getElementById('description');
+            const ideaList = document.getElementById('ideaList');
+
+            // Initialize SimpleMDE for Markdown editing
+            const simplemde = new SimpleMDE({ element: descriptionInput });
+
+            // Fetch username on load
+            fetch('/api/user') // Assuming you have an endpoint to get user info
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username) {
+                        usernameSpan.textContent = data.username;
+                    }
+                })
+                .catch(error => console.error('Error fetching user:', error));
+
+            // Fetch existing ideas on load
+            fetchIdeas();
+
+            logoutButton.addEventListener('click', () => {
+                fetch('/logout')
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = '/';
+                        } else {
+                            alert('Failed to logout.');
+                        }
+                    })
+                    .catch(error => console.error('Logout error:', error));
+            });
+
+            newIdeaForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const title = titleInput.value.trim();
+                const description = simplemde.value(); // Get Markdown content from SimpleMDE
+
+                if (title) {
+                    const response = await fetch('/api/ideas', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ title, description }),
+                    });
+
+                    if (response.ok) {
+                        titleInput.value = '';
+                        simplemde.value(''); // Clear SimpleMDE editor
+                        fetchIdeas(); // Reload the list
+                    } else {
+                        const data = await response.json();
+                        alert(data.message || 'Failed to save idea.');
+                    }
+                }
+            });
+
+            async function fetchIdeas() {
+                const response = await fetch('/api/ideas');
+                const data = await response.json();
+                ideaList.innerHTML = '';
+                data.forEach(idea => {
+                    const renderedDescription = marked.parse(idea.description || '');
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <strong>${idea.title}</strong>
+                        <div class="markdown-body">${renderedDescription}</div>
+                        <button class="delete-button" data-id="${idea._id}">Delete</button>
+                    `;
+                    ideaList.appendChild(listItem);
+                });
+
+                // Add event listeners to the new delete buttons
+                const deleteButtons = document.querySelectorAll('.delete-button');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', async (event) => {
+                        const ideaId = event.target.dataset.id;
+                        if (confirm('Are you sure you want to delete this idea?')) {
+                            const response = await fetch(`/api/ideas/${ideaId}`, {
+                                method: 'DELETE',
+                            });
+                            if (response.ok) {
+                                fetchIdeas(); // Reload the list after deletion
+                            } else {
+                                const data = await response.json();
+                                alert(data.message || 'Failed to delete idea.');
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

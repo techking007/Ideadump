@@ -10,8 +10,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to your Dashboard, <%= user.username %>!</h1>
-        <button id="logoutButton">Logout</button>
+        <h1>Welcome to your Dashboard, <span id="username"><%= user.username %></span>!</h1>
 
         <h2>Save a New Idea</h2>
         <form id="newIdeaForm">
@@ -38,8 +37,9 @@
             <% } %>
         </ul>
     </div>
+    <button id="logoutButton">Logout</button>
 
-    <div id="editModal" class="modal" style="display: none;">
+    <div id="editModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <h2>Edit Idea</h2>
@@ -56,98 +56,6 @@
             </form>
         </div>
     </div>
-
-    <style>
-        /* Basic modal styling */
-        .modal {
-            position: fixed; /* Stay in place */
-            z-index: 1; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto; /* 15% from the top and centered */
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%; /* Could be more or less, depending on screen size */
-            border-radius: 8px;
-            position: relative;
-        }
-
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close-button:hover,
-        .close-button:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        #editIdeaForm label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        #editIdeaForm input[type="text"],
-        #editIdeaForm textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        #editIdeaForm textarea {
-            min-height: 150px;
-        }
-
-        #editIdeaForm .form-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        #editIdeaForm button {
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        #updateIdeaButton {
-            background-color: #28a745; /* Green update button */
-            color: white;
-            border: none;
-        }
-
-        #updateIdeaButton:hover {
-            background-color: #218838;
-        }
-
-        #cancelEditModalButton {
-            background-color: #f4f4f4;
-            color: #555;
-            border: 1px solid #ccc;
-        }
-
-        #cancelEditModalButton:hover {
-            background-color: #e0e0e0;
-        }
-    </style>
 
     <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
